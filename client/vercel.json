@@ -1,8 +1,19 @@
 {
+  "redirects": [
+    {
+      "source": "/projects/<SideProjectName>/assets/:filePath",
+      "destination": "<SideProjectProdUrl>/assets/:filePath",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
+    },
+    {
+      "source": "/projects/<SideProjectName>",
+      "destination": "<SideProjectProdUrl>"
     }
   ]
 }
