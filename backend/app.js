@@ -22,23 +22,32 @@ app.use(morgan('dev'));
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
-      'http://localhost:5173',  // Local frontend
-      'https://your-frontend-domain.vercel.app', // Production frontend
-      'http://localhost:3000',  // Alternative local port
-      undefined  // Allow undefined origin (for same-origin requests)
+      'http://localhost:5173',
+      'https://your-frontend-domain.vercel.app',
+      'https://your-frontend-domain.netlify.app',
+      'http://localhost:3000'
     ];
     
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Cookie', 
+    'Set-Cookie', 
+    'X-Requested-With'
+  ],
   credentials: true,
   optionsSuccessStatus: 200
 };
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable preflight requests
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Enable preflight requests

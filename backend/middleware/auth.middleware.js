@@ -3,17 +3,50 @@ import jwt from "jsonwebtoken";
 import userModel from '../models/user.model.js';
 
 const isLoggedIn = async (req, res, next) => {
-    const { token } = req.cookies;
-
-    if (!token) {
-        return next(new AppError("Unauthenticated, please login again", 400))
+    try {
+      // Check token from multiple sources
+      const token = 
+        req.cookies?.token || 
+        req.header('Authorization')?.replace('Bearer ', '');
+  
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized: No token provided'
+        });
+      }
+  
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  
+      // Find user and attach to request
+      const user = await userModel.findById(decoded.id);
+  
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized: User not found'
+        });
+      }
+  
+      // Attach user to request
+      req.user = {
+        id: user._id,
+        email: user.email,
+        role: user.role || 'USER',
+        fullName: user.fullName
+      };
+  
+      next();
+    } catch (error) {
+      console.error('Authentication Error:', error);
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized: Invalid token',
+        error: error.message
+      });
     }
-
-    const userDetails = await jwt.verify(token, process.env.JWT_SECRET);
-    req.user = userDetails;
-
-    next();
-}
+  };
 
 // authorised roles
 const authorisedRoles = (...roles) => async (req, res, next) => {

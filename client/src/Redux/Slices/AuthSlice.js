@@ -22,28 +22,23 @@ export const createAccount = createAsyncThunk("/auth/signup", async (data) => {
 })
 
 // .....Login.........
-export const login = createAsyncThunk("/auth/login", async (data, { rejectWithValue }) => {
-    const loadingMessage = toast.loading("Logging in...");
-    try {
-        const res = await axiosInstance.post("/user/login", data);
+export const login = createAsyncThunk(
+    "/auth/login", 
+    async (data, { rejectWithValue }) => {
+      try {
+        const response = await axiosInstance.post("/user/login", data);
         
-        // Log the response for debugging
-        console.log('Login Response:', res.data);
-
-        toast.success(res?.data?.message, { id: loadingMessage });
+        // Store token and user data
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('userData', JSON.stringify(response.data.user));
         
-        // Store token if sent
-        if (res.data.token) {
-            localStorage.setItem('token', res.data.token);
-        }
-
-        return res?.data;
-    } catch (error) {
-        console.error('Login Error:', error);
-        toast.error(error?.response?.data?.message || 'Login failed', { id: loadingMessage });
-        return rejectWithValue(error.response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Login Error:', error.response?.data);
+        return rejectWithValue(error.response?.data || 'Login failed');
+      }
     }
-})
+  );
 
 // .....Logout.........
 export const logout = createAsyncThunk("/auth/logout", async () => {
@@ -133,9 +128,16 @@ export const resetPassword = createAsyncThunk("/user/reset", async (data) => {
 });
 
 const authSlice = createSlice({
-    name: "auth",
-    initialState,
-    reducers: {},
+    name: 'auth',
+    initialState: {
+      isLoggedIn: !!localStorage.getItem('token'),
+      role: localStorage.getItem('userData') 
+        ? JSON.parse(localStorage.getItem('userData')).role 
+        : 'USER',
+      data: localStorage.getItem('userData') 
+        ? JSON.parse(localStorage.getItem('userData')) 
+        : null
+    },
     extraReducers: (builder) => {
         // for signup
         builder.addCase(createAccount.fulfilled, (state, action) => {

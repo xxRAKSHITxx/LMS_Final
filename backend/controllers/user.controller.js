@@ -10,10 +10,13 @@ import sendEmail from "../utils/sendEmail.js";
 const cookieOptions = {
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    secure: process.env.NODE_ENV === 'production', // Only secure in production
+    secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    domain: process.env.NODE_ENV === 'production' ? '.yourdomain.com' : undefined
-};
+    domain: process.env.NODE_ENV === 'production' 
+      ? 'http://localhost:5173' 
+      : undefined,
+    path: '/'
+  };
 
 // Register  
 const register = async (req, res, next) => {
@@ -90,58 +93,70 @@ const register = async (req, res, next) => {
 // Login
 const login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-
-        // Logging for debugging
-        console.log('Login attempt:', { email });
-
-        if (!email || !password) {
-            return next(new AppError('All fields are required', 400));
-        }
-
-        const user = await userModel.findOne({ email }).select('+password');
-
-        if (!user) {
-            console.log('User not found');
-            return next(new AppError('Email or Password does not match', 400));
-        }
-
-        const isPasswordMatch = bcrypt.compareSync(password, user.password);
-        
-        if (!isPasswordMatch) {
-            console.log('Password does not match');
-            return next(new AppError('Email or Password does not match', 400));
-        }
-
-        const token = await user.generateJWTToken();
-
-        // Logging token for debugging
-        console.log('Generated Token:', token);
-
-        user.password = undefined;
-
-        // More verbose cookie setting
-        res.cookie('token', token, {
-            ...cookieOptions,
-            // Additional logging
-            httpOnly: true,
-            signed: false,
+      const { email, password } = req.body;
+  
+      console.log('Login Attempt:', { email }); // Logging
+  
+      // Find user with password
+      const user = await userModel.findOne({ email }).select('+password');
+  
+      if (!user) {
+        console.log('User not found'); // Logging
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid credentials'
         });
-
-        res.status(200).json({
-            success: true,
-            message: 'User logged in successfully',
-            user: {
-                ...user.toObject(),
-                role: user.role || 'USER'
-            },
-            token // Send token in response for additional client-side verification
+      }
+  
+      // Compare passwords
+      const isMatch = await bcrypt.compare(password, user.password);
+  
+      if (!isMatch) {
+        console.log('Password mismatch'); // Logging
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid credentials'
         });
-    } catch (e) {
-        console.error('Login Error:', e);
-        return next(new AppError(e.message, 500));
+      }
+  
+      // Generate token
+      const token = user.generateJWTToken();
+  
+      // Prepare user data (exclude sensitive info)
+      const userData = {
+        _id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role || 'USER',
+        avatar: user.avatar
+      };
+  
+      // Set cookie
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+  
+      console.log('Login Successful:', { userData }); // Logging
+  
+      res.status(200).json({
+        success: true,
+        message: 'Login successful',
+        user: userData,
+        token
+      });
+  
+    } catch (error) {
+      console.error('Login Error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error',
+        error: error.message
+      });
     }
-};
+  };
 
 // Logout
 const logout = async (req, res, next) => {
