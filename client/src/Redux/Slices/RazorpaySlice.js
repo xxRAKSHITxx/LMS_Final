@@ -11,18 +11,9 @@ const initialState = {
     monthlySalesRecord: []
 }
 
-// ....get razorpay key id.....
-// export const getRazorPayId = createAsyncThunk("/payments/keyId", async () => {
-//     try {
-//         const response = await axiosInstance.get("/payments/razorpay-key");
-//         return response?.data;
-//     } catch (error) {
-//         toast.error("Failed to load data");
-//         throw error
-//     }
-// })
+// Commented out async thunks if not needed
+// export const getRazorPayId = createAsyncThunk("/payments/keyId", async () => { ... })
 
-// ....purchase course bundle.....
 export const purchaseCourseBundle = createAsyncThunk("/payments/subscribe", async () => {
     try {
         const response = await axiosInstance.post("/payments/subscribe");
@@ -33,7 +24,6 @@ export const purchaseCourseBundle = createAsyncThunk("/payments/subscribe", asyn
     }
 })
 
-// ....verify payment.....
 export const verifyUserPayment = createAsyncThunk("/payments/verify", async (data) => {
     const loadingId = toast.loading("Subscribing bundle...");
     try {
@@ -46,7 +36,6 @@ export const verifyUserPayment = createAsyncThunk("/payments/verify", async (dat
     }
 })
 
-// .....get payment record......
 export const getPaymentRecord = createAsyncThunk("/payments/record", async () => {
     const loadingId = toast.loading("Getting the payment records");
     try {
@@ -59,46 +48,29 @@ export const getPaymentRecord = createAsyncThunk("/payments/record", async () =>
     }
 });
 
-// .....cancel subscription......
 export const cancelCourseBundle = createAsyncThunk("/payments/cancel", async () => {
     const loadingId = toast.loading("unsubscribing the bundle...")
     try {
         const response = await axiosInstance.post("/payments/unsubscribe");
         toast.success(response?.data?.message, {id: loadingId});
-        return response?.data;
+        return response?.data
     } catch (error) {
         toast.error(error?.response?.data?.message, {id: loadingId});
         throw error;
     }
 })
 
-// const razoraySlice = createSlice({
-//     name: 'razorpay',
-//     initialState,
-//     reducers: {},
-//     extraReducers: (builder) => {
-//         // for ge tRazorPay Api Key
-//         builder.addCase(getRazorPayId.fulfilled, (state, action) => {
-//             state.key = action?.payload?.key
-//         })
+// Create the slice
+const razorpaySlice = createSlice({
+    name: 'razorpay',
+    initialState,
+    reducers: {},
+    extraReducers: (builder) => {
+        // Uncomment and modify as needed
+        // builder.addCase(getRazorPayId.fulfilled, (state, action) => {
+        //     state.key = action?.payload?.key
+        // })
+    }
+})
 
-//         // for purchase course bundle
-//         builder.addCase(purchaseCourseBundle.fulfilled, (state, action) => {
-//             state.subscription_id = action?.payload?.subscription_id
-//         })
-
-//         // for verify payment
-//         builder.addCase(verifyUserPayment.fulfilled, (state, action) => {
-//             state.isPaymentVerified = action?.payload?.success
-//         })
-
-//         // for getPaymentRecord
-//         builder.addCase(getPaymentRecord.fulfilled, (state, action) => {
-//             state.allPayments = action?.payload?.allPayments;
-//             state.finalMonths = action?.payload?.finalMonths;
-//             state.monthlySalesRecord = action?.payload?.monthlySalesRecord;
-//         })
-//     }
-// })
-
-export default razoraySlice.reducer;
+export default razorpaySlice.reducer;
