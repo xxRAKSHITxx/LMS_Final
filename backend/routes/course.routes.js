@@ -10,7 +10,7 @@ import {
     deleteCourseLecture, 
     updateCourseLecture 
 } from '../controllers/course.controller.js';
-import { isLoggedIn, authorisedRoles, authorizeSubscriber } from "../middleware/auth.middleware.js";
+import { isLoggedIn, authorisedRoles} from "../middleware/auth.middleware.js";
 import upload from "../middleware/multer.middleware.js";
 
 // Routes for courses
