@@ -1,22 +1,20 @@
 import React, { useEffect } from "react";
 import Layout from "../../Layout/Layout";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 
 export default function CourseDescription() {
   const { state } = useLocation();
   const navigate = useNavigate();
 
-  const { role, data } = useSelector((state) => state.auth);
-
   useEffect(() => {
-    if(!state) {
+    if (!state) {
       navigate("/courses");
     }
-  }, [])
+  }, []);
+
   return (
     <Layout>
-      <section className="min-h-[90vh] md:pt-12 pt-2 px-4 lg:px-20 flex flex-col   text-gray-800 dark:text-white">
+      <section className="min-h-[90vh] md:pt-12 pt-2 px-4 lg:px-20 flex flex-col text-gray-800 dark:text-white">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 py-10 relative">
           <div className="lg:col-span-1 space-y-5">
             <img
@@ -29,14 +27,14 @@ export default function CourseDescription() {
               <div className="flex flex-col text-lg font-inter">
                 <p className="font-semibold">
                   <span className="text-yellow-600 dark:text-yellow-500 font-bold">
-                    Total lectures:{" "}
+                    Total lectures: {" "}
                   </span>
                   {state?.numberOfLectures}
                 </p>
 
                 <p className="font-semibold">
                   <span className="text-yellow-600 dark:text-yellow-500 font-bold">
-                    Instructor:{" "}
+                    Instructor: {" "}
                   </span>
                   {state?.createdBy}
                 </p>
@@ -58,23 +56,14 @@ export default function CourseDescription() {
               </p>
             </div>
 
-            {role === "ADMIN" || data?.subscription?.status === "active" ? (
-              <button
-                onClick={() =>
-                  navigate("/course/displaylectures", { state: { ...state } })
-                }
-                className="bg-orange-500 dark:bg-orange-600 text-white text-xl rounded-md font-bold px-5 py-3 w-full   transition-all ease-in-out duration-300"
-              >
-                Watch lectures
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate("/checkout")}
-                className="bg-orange-500 dark:bg-orange-600 text-white text-xl rounded-md font-bold px-5 py-3 w-full   transition-all ease-in-out duration-300"
-              >
-                Subscribe
-              </button>
-            )}
+            <button
+              onClick={() =>
+                navigate("/course/displaylectures", { state: { ...state } })
+              }
+              className="bg-orange-500 dark:bg-orange-600 text-white text-xl rounded-md font-bold px-5 py-3 w-full"
+            >
+              Watch lectures
+            </button>
           </div>
         </div>
       </section>
