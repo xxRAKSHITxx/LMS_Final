@@ -1,7 +1,7 @@
 import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import fs from 'fs';
 import cloudinary from 'cloudinary';
 import AppError from "../utils/error.utils.js";
@@ -10,10 +10,9 @@ import sendEmail from "../utils/sendEmail.js";
 const cookieOptions = {
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    secure: true, 
+    secure: true,
     sameSite: 'none'
-}
-
+};
 
 // Register  
 const register = async (req, res, next) => {
@@ -87,63 +86,61 @@ const register = async (req, res, next) => {
     }
 };
 
-
-
-// login
+// Login
 const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        // check if user miss any field
+        // Check if user misses any fields
         if (!email || !password) {
-            return next(new AppError('All fields are required', 400))
+            return next(new AppError('All fields are required', 400));
         }
 
         const user = await userModel.findOne({ email }).select('+password');
 
         if (!user || !(bcrypt.compareSync(password, user.password))) {
-            return next(new AppError('Email or Password does not match', 400))
+            return next(new AppError('Email or Password does not match', 400));
         }
 
         const token = await user.generateJWTToken();
 
         user.password = undefined;
 
-        res.cookie('token', token, cookieOptions)
+        res.cookie('token', token, cookieOptions);
 
         res.status(200).json({
             success: true,
-            message: 'User loggedin successfully',
-            user,
-        })
+            message: 'User logged in successfully',
+            user: {
+                ...user.toObject(), // Convert Mongoose document to plain object
+                role: user.role || 'USER' // Ensure role is always set
+            }
+        });
     } catch (e) {
-        return next(new AppError(e.message, 500))
+        return next(new AppError(e.message, 500));
     }
-}
+};
 
-
-// logout
+// Logout
 const logout = async (req, res, next) => {
     try {
         res.cookie('token', null, {
             secure: true,
             maxAge: 0,
             httpOnly: true
-        })
+        });
 
         res.status(200).json({
             success: true,
-            message: 'User loggedout successfully'
-        })
+            message: 'User logged out successfully'
+        });
+    } catch (e) {
+        return next(new AppError(e.message, 500));
     }
-    catch (e) {
-        return next(new AppError(e.message, 500))
-    }
-}
+};
 
-
-// getProfile
-const getProfile = async (req, res) => {
+// Get Profile
+const getProfile = async (req, res, next) => {
     try {
         const { id } = req.user;
         const user = await userModel.findById(id);
@@ -152,34 +149,32 @@ const getProfile = async (req, res) => {
             success: true,
             message: 'User details',
             user
-        })
+        });
     } catch (e) {
-        return next(new AppError('Failed to fetch user profile', 500))
+        return next(new AppError('Failed to fetch user profile', 500));
     }
-}
+};
 
-// forgot password
+// Forgot Password
 const forgotPassword = async (req, res, next) => {
     const { email } = req.body;
-    // check if user does'nt pass email
     if (!email) {
-        return next(new AppError('Email is required', 400))
+        return next(new AppError('Email is required', 400));
     }
 
     const user = await userModel.findOne({ email });
-    // check if user not registered with the email
     if (!user) {
-        return next(new AppError('Email not registered', 400))
+        return next(new AppError('Email not registered', 400));
     }
 
     const resetToken = await user.generatePasswordResetToken();
 
     await user.save();
 
-    const resetPasswordURL = `${process.env.CLIENT_URL}/user/profile/reset-password/${resetToken}`
+    const resetPasswordURL = `${process.env.CLIENT_URL}/user/profile/reset-password/${resetToken}`;
 
     const subject = 'Reset Password';
-    const message = `You can reset your password by clicking ${resetPasswordURL} Reset your password</$>\nIf the above link does not work for some reason then copy paste this link in new tab ${resetPasswordURL}.\n If you have not requested this, kindly ignore.`;
+    const message = `You can reset your password by clicking ${resetPasswordURL}.\nIf the above link does not work, copy-paste this link into a new tab ${resetPasswordURL}.\nIf you did not request this, kindly ignore.`;
 
     try {
         await sendEmail(email, subject, message);
@@ -194,16 +189,13 @@ const forgotPassword = async (req, res, next) => {
         await user.save();
         return next(new AppError(e.message, 500));
     }
+};
 
-}
-
-
-// reset password
+// Reset Password
 const resetPassword = async (req, res, next) => {
     try {
         const { resetToken } = req.params;
-
-        const { password } = req.body; 
+        const { password } = req.body;
 
         const forgotPasswordToken = crypto
             .createHash('sha256')
@@ -213,7 +205,7 @@ const resetPassword = async (req, res, next) => {
         const user = await userModel.findOne({
             forgotPasswordToken,
             forgotPasswordExpiry: { $gt: Date.now() }
-        })
+        });
 
         if (!user) {
             return next(new AppError("Token is invalid or expired, please try again", 400));
@@ -228,20 +220,20 @@ const resetPassword = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: "Password changed successfully"
-        })
+        });
     } catch (e) {
-        return next(new AppError(e.message, 500))
+        return next(new AppError(e.message, 500));
     }
-}
+};
 
-// change password
+// Change Password
 const changePassword = async (req, res, next) => {
     try {
         const { oldPassword, newPassword } = req.body;
         const { id } = req.user;
 
         if (!oldPassword || !newPassword) {
-            return next(new AppError("All fields are requared", 400));
+            return next(new AppError("All fields are required", 400));
         }
 
         const user = await userModel.findById(id).select('+password');
@@ -261,29 +253,26 @@ const changePassword = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: "Password changed successfully"
-        })
+        });
     } catch (e) {
-        return next(new AppError(e.message, 500))
+        return next(new AppError(e.message, 500));
     }
+};
 
-}
-
-// update profile
+// Update Profile
 const updateUser = async (req, res, next) => {
     try {
         const { fullName } = req.body;
         const { id } = req.user;
 
-        console.log(fullName);
-
         const user = await userModel.findById(id);
 
         if (!user) {
-            return next(new AppError("user does not exist", 400));
+            return next(new AppError("User does not exist", 400));
         }
 
         if (fullName) {
-            user.fullName = fullName
+            user.fullName = fullName;
         }
 
         if (req.file) {
@@ -296,7 +285,7 @@ const updateUser = async (req, res, next) => {
                     height: 250,
                     gravity: 'faces',
                     crop: 'fill'
-                })
+                });
 
                 if (result) {
                     user.avatar.public_id = result.public_id;
@@ -304,10 +293,9 @@ const updateUser = async (req, res, next) => {
 
                     // Remove file from server
                     fs.rmSync(`uploads/${req.file.filename}`);
-
                 }
             } catch (e) {
-                return next(new AppError(e.message || 'File not uploaded, please try again', 500))
+                return next(new AppError(e.message || 'File not uploaded, please try again', 500));
             }
         }
 
@@ -315,13 +303,13 @@ const updateUser = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            message: "User update successfully",
+            message: "User updated successfully",
             user
-        })
+        });
     } catch (e) {
-        return next(new AppError(e.message, 500))
+        return next(new AppError(e.message, 500));
     }
-}
+};
 
 export {
     register,
@@ -332,4 +320,4 @@ export {
     resetPassword,
     changePassword,
     updateUser
-}
+};
