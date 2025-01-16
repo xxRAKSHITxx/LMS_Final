@@ -12,15 +12,15 @@ const initialState = {
 }
 
 // ....get razorpay key id.....
-export const getRazorPayId = createAsyncThunk("/payments/keyId", async () => {
-    try {
-        const response = await axiosInstance.get("/payments/razorpay-key");
-        return response?.data;
-    } catch (error) {
-        toast.error("Failed to load data");
-        throw error
-    }
-})
+// export const getRazorPayId = createAsyncThunk("/payments/keyId", async () => {
+//     try {
+//         const response = await axiosInstance.get("/payments/razorpay-key");
+//         return response?.data;
+//     } catch (error) {
+//         toast.error("Failed to load data");
+//         throw error
+//     }
+// })
 
 // ....purchase course bundle.....
 export const purchaseCourseBundle = createAsyncThunk("/payments/subscribe", async () => {
@@ -72,33 +72,33 @@ export const cancelCourseBundle = createAsyncThunk("/payments/cancel", async () 
     }
 })
 
-const razoraySlice = createSlice({
-    name: 'razorpay',
-    initialState,
-    reducers: {},
-    extraReducers: (builder) => {
-        // for ge tRazorPay Api Key
-        builder.addCase(getRazorPayId.fulfilled, (state, action) => {
-            state.key = action?.payload?.key
-        })
+// const razoraySlice = createSlice({
+//     name: 'razorpay',
+//     initialState,
+//     reducers: {},
+//     extraReducers: (builder) => {
+//         // for ge tRazorPay Api Key
+//         builder.addCase(getRazorPayId.fulfilled, (state, action) => {
+//             state.key = action?.payload?.key
+//         })
 
-        // for purchase course bundle
-        builder.addCase(purchaseCourseBundle.fulfilled, (state, action) => {
-            state.subscription_id = action?.payload?.subscription_id
-        })
+//         // for purchase course bundle
+//         builder.addCase(purchaseCourseBundle.fulfilled, (state, action) => {
+//             state.subscription_id = action?.payload?.subscription_id
+//         })
 
-        // for verify payment
-        builder.addCase(verifyUserPayment.fulfilled, (state, action) => {
-            state.isPaymentVerified = action?.payload?.success
-        })
+//         // for verify payment
+//         builder.addCase(verifyUserPayment.fulfilled, (state, action) => {
+//             state.isPaymentVerified = action?.payload?.success
+//         })
 
-        // for getPaymentRecord
-        builder.addCase(getPaymentRecord.fulfilled, (state, action) => {
-            state.allPayments = action?.payload?.allPayments;
-            state.finalMonths = action?.payload?.finalMonths;
-            state.monthlySalesRecord = action?.payload?.monthlySalesRecord;
-        })
-    }
-})
+//         // for getPaymentRecord
+//         builder.addCase(getPaymentRecord.fulfilled, (state, action) => {
+//             state.allPayments = action?.payload?.allPayments;
+//             state.finalMonths = action?.payload?.finalMonths;
+//             state.monthlySalesRecord = action?.payload?.monthlySalesRecord;
+//         })
+//     }
+// })
 
 export default razoraySlice.reducer;

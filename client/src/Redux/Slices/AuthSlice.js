@@ -22,15 +22,26 @@ export const createAccount = createAsyncThunk("/auth/signup", async (data) => {
 })
 
 // .....Login.........
-export const login = createAsyncThunk("/auth/login", async (data) => {
-    const loadingMessage = toast.loading("Please wait! logging into your account...");
+export const login = createAsyncThunk("/auth/login", async (data, { rejectWithValue }) => {
+    const loadingMessage = toast.loading("Logging in...");
     try {
         const res = await axiosInstance.post("/user/login", data);
+        
+        // Log the response for debugging
+        console.log('Login Response:', res.data);
+
         toast.success(res?.data?.message, { id: loadingMessage });
-        return res?.data
+        
+        // Store token if sent
+        if (res.data.token) {
+            localStorage.setItem('token', res.data.token);
+        }
+
+        return res?.data;
     } catch (error) {
-        toast.error(error?.response?.data?.message, { id: loadingMessage });
-        throw error;
+        console.error('Login Error:', error);
+        toast.error(error?.response?.data?.message || 'Login failed', { id: loadingMessage });
+        return rejectWithValue(error.response.data);
     }
 })
 

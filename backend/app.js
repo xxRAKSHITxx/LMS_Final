@@ -22,10 +22,10 @@ app.use(morgan('dev'));
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
-      'https://udyamshala.com', 
-      'http://localhost:5173',  // Local development
-      'https://your-production-domain.vercel.app', // Add your exact production domain
-      'https://lms-1-34wr5ym84-xxrakshitxxs-projects.vercel.app/'
+      'http://localhost:5173',  // Local frontend
+      'https://your-frontend-domain.vercel.app', // Production frontend
+      'http://localhost:3000',  // Alternative local port
+      undefined  // Allow undefined origin (for same-origin requests)
     ];
     
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
@@ -35,7 +35,7 @@ const corsOptions = {
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
   credentials: true,
   optionsSuccessStatus: 200
 };

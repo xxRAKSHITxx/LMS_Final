@@ -10,8 +10,9 @@ import sendEmail from "../utils/sendEmail.js";
 const cookieOptions = {
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    secure: true,
-    sameSite: 'none'
+    secure: process.env.NODE_ENV === 'production', // Only secure in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    domain: process.env.NODE_ENV === 'production' ? '.yourdomain.com' : undefined
 };
 
 // Register  
@@ -91,32 +92,53 @@ const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        // Check if user misses any fields
+        // Logging for debugging
+        console.log('Login attempt:', { email });
+
         if (!email || !password) {
             return next(new AppError('All fields are required', 400));
         }
 
         const user = await userModel.findOne({ email }).select('+password');
 
-        if (!user || !(bcrypt.compareSync(password, user.password))) {
+        if (!user) {
+            console.log('User not found');
+            return next(new AppError('Email or Password does not match', 400));
+        }
+
+        const isPasswordMatch = bcrypt.compareSync(password, user.password);
+        
+        if (!isPasswordMatch) {
+            console.log('Password does not match');
             return next(new AppError('Email or Password does not match', 400));
         }
 
         const token = await user.generateJWTToken();
 
+        // Logging token for debugging
+        console.log('Generated Token:', token);
+
         user.password = undefined;
 
-        res.cookie('token', token, cookieOptions);
+        // More verbose cookie setting
+        res.cookie('token', token, {
+            ...cookieOptions,
+            // Additional logging
+            httpOnly: true,
+            signed: false,
+        });
 
         res.status(200).json({
             success: true,
             message: 'User logged in successfully',
             user: {
-                ...user.toObject(), // Convert Mongoose document to plain object
-                role: user.role || 'USER' // Ensure role is always set
-            }
+                ...user.toObject(),
+                role: user.role || 'USER'
+            },
+            token // Send token in response for additional client-side verification
         });
     } catch (e) {
+        console.error('Login Error:', e);
         return next(new AppError(e.message, 500));
     }
 };
